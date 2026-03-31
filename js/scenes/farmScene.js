@@ -11,6 +11,9 @@ const FarmScene = {
     // NPCs
     npcs: [],
 
+    // Cottage 2 state
+    cottage2Looted: false,
+
     T: {
         GRASS: 0,
         DIRT: 1,
@@ -53,12 +56,14 @@ const FarmScene = {
                 // Cottage 1 door
                 if (r === 13 && c >= 33 && c <= 35) tile = T.DOOR;
 
-                // --- Cottage 2 (locked, below path) ---
-                if (r >= 22 && r <= 24 && c >= 30 && c <= 38) tile = T.ROOF;
-                if (r >= 25 && r <= 30 && c >= 30 && c <= 38) tile = T.BUILDING;
-                if (r === 31 && c >= 30 && c <= 38) tile = T.WALL;
-                // Cottage 2 door
-                if (r === 31 && c >= 33 && c <= 35) tile = T.DOOR;
+                // --- Cottage 2 (locked, below path) - disappears after looted ---
+                if (!this.cottage2Looted) {
+                    if (r >= 22 && r <= 24 && c >= 30 && c <= 38) tile = T.ROOF;
+                    if (r >= 25 && r <= 30 && c >= 30 && c <= 38) tile = T.BUILDING;
+                    if (r === 31 && c >= 30 && c <= 38) tile = T.WALL;
+                    // Cottage 2 door
+                    if (r === 31 && c >= 33 && c <= 35) tile = T.DOOR;
+                }
 
                 // Bus stop area (small sidewalk)
                 if (r >= 17 && r <= 20 && c >= 2 && c <= 4) tile = T.SIDEWALK;
@@ -92,19 +97,18 @@ const FarmScene = {
                 }
             },
             // Cottage 2 door (locked - requires level 5)
-            {
+            ...(this.cottage2Looted ? [] : [{
                 x: 34 * 16 + 8,
                 y: 31 * 16 + 8,
                 type: 'door',
                 action: () => {
                     if (Inventory.stats.level >= 5) {
-                        // Could add another room later
-                        UI.showNotification('문이 열렸다!', 2);
+                        SceneManager.switchScene('room', { from: 'farm_cottage2' });
                     } else {
                         UI.showNotification('레벨이 낮아서 들어갈 수 없습니다! (Lv.5 필요)', 3);
                     }
                 }
-            }
+            }])
         ];
 
         // Carrots in the field
@@ -231,8 +235,10 @@ const FarmScene = {
         // Cottage 1 door
         ObjectSprites.draw(ctx, 'door', 33 * 16 + 8, 13 * 16);
 
-        // Cottage 2 door
-        ObjectSprites.draw(ctx, 'door', 33 * 16 + 8, 31 * 16);
+        // Cottage 2 door (only if not looted)
+        if (!this.cottage2Looted) {
+            ObjectSprites.draw(ctx, 'door', 33 * 16 + 8, 31 * 16);
+        }
 
         // Draw carrots
         let idx = 0;

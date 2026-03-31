@@ -16,6 +16,7 @@ const SceneManager = {
         this.scenes = {
             title: TitleScene,
             settings: SettingsScene,
+            lore: LoreScene,
             city: CityScene,
             farm: FarmScene,
             room: RoomScene,

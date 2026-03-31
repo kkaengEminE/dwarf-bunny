@@ -115,8 +115,8 @@ const Inventory = {
     },
 
     update() {
-        // E key toggles inventory
-        if (Input.wasPressed('KeyE')) {
+        // I key toggles inventory
+        if (Input.wasPressed('KeyI')) {
             this.toggleInventory();
         }
         // C key toggles stats
@@ -155,7 +155,7 @@ const Inventory = {
         // Title
         ctx.fillStyle = '#ffcc66';
         ctx.font = 'bold 14px monospace';
-        ctx.fillText('인벤토리 (E)', x + 70, y + 24);
+        ctx.fillText('인벤토리 (I)', x + 70, y + 24);
 
         // Carrot item slot
         const slotX = x + 30, slotY = y + 50;
@@ -192,7 +192,7 @@ const Inventory = {
         // Instructions
         ctx.fillStyle = '#888866';
         ctx.font = '10px monospace';
-        ctx.fillText('E 키로 닫기', x + 75, y + h - 14);
+        ctx.fillText('I 키로 닫기', x + 75, y + h - 14);
     },
 
     // Render stats overlay

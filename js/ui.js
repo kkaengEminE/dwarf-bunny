@@ -45,7 +45,7 @@ const UI = {
     render(ctx) {
         const scene = SceneManager.currentName;
         // Skip game UI for title/settings/loading
-        if (scene === 'title' || scene === 'settings' || scene === 'loading') return;
+        if (scene === 'title' || scene === 'settings' || scene === 'loading' || scene === 'lore') return;
 
         // Mode indicator
         this._renderModeIndicator(ctx);
@@ -81,7 +81,7 @@ const UI = {
 
     checkMenuClick() {
         const scene = SceneManager.currentName;
-        if (scene === 'title' || scene === 'settings' || scene === 'loading') return;
+        if (scene === 'title' || scene === 'settings' || scene === 'loading' || scene === 'lore') return;
         if (Input.clickedInRect(this.menuBtn)) {
             SceneManager.switchScene('title');
         }

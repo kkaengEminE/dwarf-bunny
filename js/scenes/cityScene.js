@@ -127,13 +127,19 @@ const CityScene = {
     _initNPCs() {
         this.npcs = [
             NPC.create(15 * 16, 16 * 16, '시민 토끼'),
-            NPC.create(20 * 16, 30 * 16, '아기 토끼'),
+            NPC.create(14 * 16, 22 * 16, '아기 토끼'),
             NPC.create(40 * 16, 16 * 16, '경비 토끼'),
             NPC.create(14 * 16, 34 * 16, '상인 토끼'),
         ];
-        for (const npc of this.npcs) {
-            npc.bounds = { minX: 2 * 16, minY: 3 * 16, maxX: 47 * 16, maxY: 35 * 16 };
-        }
+        // Bounds per NPC - keep them in safe sidewalk/road areas
+        // 시민 토끼: upper sidewalk area
+        this.npcs[0].bounds = { minX: 2 * 16, minY: 16 * 16, maxX: 23 * 16, maxY: 17 * 16 };
+        // 아기 토끼: middle sidewalk between buildings
+        this.npcs[1].bounds = { minX: 2 * 16, minY: 21 * 16, maxX: 23 * 16, maxY: 23 * 16 };
+        // 경비 토끼: right side near bus stop
+        this.npcs[2].bounds = { minX: 27 * 16, minY: 16 * 16, maxX: 29 * 16, maxY: 17 * 16 };
+        // 상인 토끼: bottom sidewalk
+        this.npcs[3].bounds = { minX: 2 * 16, minY: 34 * 16, maxX: 23 * 16, maxY: 35 * 16 };
     },
 
     onEnter(data) {

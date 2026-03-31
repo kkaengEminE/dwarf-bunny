@@ -64,7 +64,7 @@ const Game = {
 
         // Night overlay (skip for non-game scenes)
         const scene = SceneManager.currentName;
-        if (this.nightAlpha > 0.01 && scene !== 'loading' && scene !== 'title' && scene !== 'settings') {
+        if (this.nightAlpha > 0.01 && scene !== 'loading' && scene !== 'title' && scene !== 'settings' && scene !== 'lore') {
             ctx.fillStyle = `rgba(10, 10, 40, ${this.nightAlpha})`;
             ctx.fillRect(0, 0, this.width, this.height);
 
