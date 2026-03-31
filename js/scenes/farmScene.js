@@ -8,6 +8,9 @@ const FarmScene = {
     carrotsHarvested: 0,
     carrotStates: [], // track which carrots are harvested
 
+    // NPCs
+    npcs: [],
+
     T: {
         GRASS: 0,
         DIRT: 1,
@@ -43,12 +46,19 @@ const FarmScene = {
                 // Carrot field (left area)
                 if (r >= 8 && r <= 14 && c >= 4 && c <= 18) tile = T.FARM_DIRT;
 
-                // --- Cottage (top-right, before stream) ---
+                // --- Cottage 1 (top-right, before stream) ---
                 if (r >= 4 && r <= 6 && c >= 30 && c <= 38) tile = T.ROOF;
                 if (r >= 7 && r <= 12 && c >= 30 && c <= 38) tile = T.BUILDING;
                 if (r === 13 && c >= 30 && c <= 38) tile = T.WALL;
-                // Cottage door
+                // Cottage 1 door
                 if (r === 13 && c >= 33 && c <= 35) tile = T.DOOR;
+
+                // --- Cottage 2 (locked, below path) ---
+                if (r >= 22 && r <= 24 && c >= 30 && c <= 38) tile = T.ROOF;
+                if (r >= 25 && r <= 30 && c >= 30 && c <= 38) tile = T.BUILDING;
+                if (r === 31 && c >= 30 && c <= 38) tile = T.WALL;
+                // Cottage 2 door
+                if (r === 31 && c >= 33 && c <= 35) tile = T.DOOR;
 
                 // Bus stop area (small sidewalk)
                 if (r >= 17 && r <= 20 && c >= 2 && c <= 4) tile = T.SIDEWALK;
@@ -72,7 +82,7 @@ const FarmScene = {
                     SceneManager.switchScene('loading', { destination: 'city' });
                 }
             },
-            // Cottage door
+            // Cottage 1 door (enterable)
             {
                 x: 34 * 16 + 8,
                 y: 13 * 16 + 8,
@@ -80,11 +90,30 @@ const FarmScene = {
                 action: () => {
                     SceneManager.switchScene('room', { from: 'farm' });
                 }
+            },
+            // Cottage 2 door (locked - requires level 5)
+            {
+                x: 34 * 16 + 8,
+                y: 31 * 16 + 8,
+                type: 'door',
+                action: () => {
+                    if (Inventory.stats.level >= 5) {
+                        // Could add another room later
+                        UI.showNotification('문이 열렸다!', 2);
+                    } else {
+                        UI.showNotification('레벨이 낮아서 들어갈 수 없습니다! (Lv.5 필요)', 3);
+                    }
+                }
             }
         ];
 
         // Carrots in the field
         this._addCarrotInteractables();
+
+        // NPC interactables
+        for (const npc of this.npcs) {
+            this.interactables.push(NPC.makeInteractable(npc));
+        }
     },
 
     _addCarrotInteractables() {
@@ -114,6 +143,8 @@ const FarmScene = {
                         action: () => {
                             this.carrotStates[carrotIdx] = true;
                             this.carrotsHarvested++;
+                            Inventory.addCarrots(1);
+                            Inventory.gainExp(2);
                             this._addCarrotInteractables(); // rebuild
                         }
                     });
@@ -123,8 +154,37 @@ const FarmScene = {
         }
     },
 
+    _initNPCs() {
+        this.npcs = [
+            NPC.create(12 * 16, 20 * 16, '농부 토끼'),
+            NPC.create(20 * 16, 26 * 16, '꼬마 토끼'),
+            NPC.create(36 * 16, 18 * 16, '할머니 토끼'),
+        ];
+        // Set bounds for farm
+        for (const npc of this.npcs) {
+            npc.bounds = { minX: 16, minY: 16, maxX: 38 * 16, maxY: 36 * 16 };
+        }
+    },
+
+    // Reset carrots when returning by bus
+    _resetCarrots() {
+        this.carrotStates = [];
+        this.carrotsHarvested = 0;
+        for (let i = 0; i < 21; i++) {
+            this.carrotStates.push(false);
+        }
+    },
+
     onEnter(data) {
+        // Reset carrots every time entering farm (bus restores them)
+        this._resetCarrots();
+
         this._buildMap();
+
+        if (this.npcs.length === 0) {
+            this._initNPCs();
+        }
+
         this._buildInteractables();
 
         if (data && data.x !== undefined) {
@@ -137,9 +197,20 @@ const FarmScene = {
     onExit() {},
 
     update(dt) {
+        if (Inventory.isOverlayOpen()) {
+            Inventory.update();
+            return;
+        }
+        Inventory.update();
+
         Player.update(dt, this.tileMap, this.solidTiles);
         Interaction.check(this.interactables);
         UI.update(dt);
+
+        // Update NPCs
+        for (const npc of this.npcs) {
+            NPC.updateOne(npc, dt, this.tileMap, this.solidTiles);
+        }
     },
 
     render(ctx) {
@@ -157,8 +228,11 @@ const FarmScene = {
         // Bus stop sign
         ObjectSprites.draw(ctx, 'busStop', 3 * 16, 16 * 16);
 
-        // Cottage door
+        // Cottage 1 door
         ObjectSprites.draw(ctx, 'door', 33 * 16 + 8, 13 * 16);
+
+        // Cottage 2 door
+        ObjectSprites.draw(ctx, 'door', 33 * 16 + 8, 31 * 16);
 
         // Draw carrots
         let idx = 0;
@@ -183,6 +257,11 @@ const FarmScene = {
         ];
         for (const [c, r] of treePositions) {
             ObjectSprites.draw(ctx, 'tree', c * 16, r * 16);
+        }
+
+        // Draw NPCs
+        for (const npc of this.npcs) {
+            NPC.renderOne(ctx, npc);
         }
 
         // Draw player

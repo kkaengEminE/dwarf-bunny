@@ -10,9 +10,17 @@ const LoadingScene = {
     onEnter(data) {
         this.destination = (data && data.destination) || 'farm';
         this.timer = 0;
-        this.busX = -80;
         this.dotTimer = 0;
         this.dots = '';
+
+        // Bus starts from different sides depending on direction
+        if (this.destination === 'city') {
+            // Going to city: bus goes right to left (reversed)
+            this.busX = Game.width + 80;
+        } else {
+            // Going to farm: bus goes left to right (normal)
+            this.busX = -80;
+        }
     },
 
     onExit() {},
@@ -21,7 +29,14 @@ const LoadingScene = {
         this.timer += dt;
 
         // Animate bus
-        this.busX = -80 + (this.timer / this.duration) * (Game.width + 160);
+        const progress = this.timer / this.duration;
+        if (this.destination === 'city') {
+            // Right to left
+            this.busX = (Game.width + 80) - progress * (Game.width + 160);
+        } else {
+            // Left to right
+            this.busX = -80 + progress * (Game.width + 160);
+        }
 
         // Animate dots
         this.dotTimer += dt;
@@ -47,7 +62,6 @@ const LoadingScene = {
         // Stars
         ctx.fillStyle = '#ffffff';
         for (let i = 0; i < 30; i++) {
-            // Pseudo-random positions based on index
             const sx = ((i * 137 + 50) % Game.width);
             const sy = ((i * 97 + 30) % (Game.height / 2));
             ctx.fillRect(sx, sy, 1, 1);
@@ -56,10 +70,17 @@ const LoadingScene = {
         // Road
         ctx.fillStyle = '#555566';
         ctx.fillRect(0, Game.height / 2 + 20, Game.width, 60);
-        // Road lines
+
+        // Road lines - direction depends on destination
         ctx.fillStyle = '#ffff88';
         for (let x = 0; x < Game.width; x += 40) {
-            const lineX = (x - this.timer * 200) % Game.width;
+            let lineX;
+            if (this.destination === 'city') {
+                // Lines move right (bus goes left)
+                lineX = (x + this.timer * 200) % Game.width;
+            } else {
+                lineX = (x - this.timer * 200) % Game.width;
+            }
             if (lineX > 0) {
                 ctx.fillRect(lineX, Game.height / 2 + 47, 20, 4);
             }
@@ -68,6 +89,11 @@ const LoadingScene = {
         // Bus
         ctx.save();
         ctx.translate(this.busX, Game.height / 2 - 12);
+        if (this.destination === 'city') {
+            // Flip bus horizontally when going to city (right to left)
+            ctx.translate(64, 0);
+            ctx.scale(-1, 1);
+        }
         ObjectSprites.draw(ctx, 'bus', 0, 0);
         ctx.restore();
 

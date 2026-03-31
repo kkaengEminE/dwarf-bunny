@@ -180,6 +180,30 @@ const ObjectSprites = {
             ctx.fillRect(58, 16, 4, 4);
         });
 
+        // Storage chest (24x20)
+        this.sprites.chest = this._create(24, 20, (ctx) => {
+            // Body
+            ctx.fillStyle = '#8B6914';
+            ctx.fillRect(2, 6, 20, 14);
+            // Lid
+            ctx.fillStyle = '#a07818';
+            ctx.fillRect(1, 2, 22, 6);
+            ctx.fillStyle = '#7a5a0a';
+            ctx.fillRect(1, 2, 22, 1);
+            // Metal bands
+            ctx.fillStyle = '#888888';
+            ctx.fillRect(2, 8, 20, 1);
+            ctx.fillRect(2, 14, 20, 1);
+            // Lock
+            ctx.fillStyle = '#ddcc00';
+            ctx.fillRect(10, 4, 4, 4);
+            ctx.fillStyle = '#aa9900';
+            ctx.fillRect(11, 5, 2, 2);
+            // Bottom edge
+            ctx.fillStyle = '#6a4a08';
+            ctx.fillRect(2, 18, 20, 2);
+        });
+
         // Interaction prompt icon (small arrow)
         this.sprites.prompt = this._create(16, 8, (ctx) => {
             ctx.fillStyle = '#ffffff';

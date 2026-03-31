@@ -1,4 +1,4 @@
-// Room Scene - interior of house/cottage
+// Room Scene - interior of house/cottage with storage chest
 const RoomScene = {
     TILE_SIZE: 16,
     MAP_COLS: 20,
@@ -55,18 +55,30 @@ const RoomScene = {
     _buildInteractables() {
         const ox = this.offsetX;
         const oy = this.offsetY;
-        // Door to exit - positions include offset for screen-space interaction
+        const loc = this.previousScene; // 'farm' or 'city'
+
         this.interactables = [
+            // Door to exit
             {
                 x: ox + 9.5 * 16 + 8,
                 y: oy + (this.MAP_ROWS - 1) * 16 + 8,
                 type: 'door',
                 action: () => {
+                    Inventory.closeAll();
                     if (this.previousScene === 'farm') {
                         SceneManager.switchScene('farm', { x: 34 * 16, y: 14 * 16 });
                     } else {
                         SceneManager.switchScene('city', { x: 8 * 16, y: 34 * 16 });
                     }
+                }
+            },
+            // Storage chest
+            {
+                x: ox + 17 * 16 + 8,
+                y: oy + 2 * 16 + 12,
+                type: 'chest',
+                action: () => {
+                    Inventory.toggleStorage(loc);
                 }
             }
         ];
@@ -90,11 +102,21 @@ const RoomScene = {
         );
     },
 
-    onExit() {},
+    onExit() {
+        Inventory.closeAll();
+    },
 
     update(dt) {
-        // Player operates in screen coords (offset already baked in)
-        // But collision needs room-local tile map, so we translate the player bbox
+        if (Inventory.isOverlayOpen()) {
+            Inventory.update();
+            // Allow closing storage with Z
+            if (Inventory.showStorage && Input.wasPressed('KeyZ')) {
+                Inventory.showStorage = false;
+            }
+            return;
+        }
+        Inventory.update();
+
         Player.update(dt, this.tileMap, this.solidTiles, this.offsetX, this.offsetY);
         Interaction.check(this.interactables);
         UI.update(dt);
@@ -116,8 +138,15 @@ const RoomScene = {
 
         // Draw furniture
         ObjectSprites.draw(ctx, 'bed', this.offsetX + 2 * 16, this.offsetY + 2 * 16);
-        ObjectSprites.draw(ctx, 'desk', this.offsetX + 14 * 16, this.offsetY + 2 * 16);
+        ObjectSprites.draw(ctx, 'desk', this.offsetX + 10 * 16, this.offsetY + 2 * 16);
+        ObjectSprites.draw(ctx, 'chest', this.offsetX + 16 * 16 + 4, this.offsetY + 2 * 16);
         ObjectSprites.draw(ctx, 'door', this.offsetX + 9 * 16, this.offsetY + (this.MAP_ROWS - 1) * 16);
+
+        // Label for chest
+        ctx.fillStyle = '#aa8855';
+        ctx.font = '8px monospace';
+        const loc = this.previousScene === 'farm' ? '농장' : '도시';
+        ctx.fillText(`${loc} 창고`, this.offsetX + 16 * 16, this.offsetY + 5 * 16 + 4);
 
         // Draw player (screen coords)
         Player.render(ctx);

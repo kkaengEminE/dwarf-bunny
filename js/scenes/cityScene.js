@@ -7,6 +7,9 @@ const CityScene = {
     interactables: [],
     previousScene: null,
 
+    // NPCs
+    npcs: [],
+
     // Tile IDs
     T: {
         GRASS: 0,
@@ -99,20 +102,47 @@ const CityScene = {
                     SceneManager.switchScene('room', { from: 'city' });
                 }
             },
-            // TAX building entrance
+            // TAX building entrance - deducts 1 carrot as tax
             {
                 x: 9 * 16 + 8,
                 y: 15 * 16 + 8,
                 type: 'taxBuilding',
                 action: () => {
-                    UI.showSpeechBubble('세금을 냅시다!', 9 * 16 + 8, 14 * 16, 3);
+                    if (Inventory.carrots > 0) {
+                        Inventory.removeCarrots(1);
+                        UI.showSpeechBubble('세금 납부! 당근 -1', 9 * 16 + 8, 14 * 16, 3);
+                    } else {
+                        UI.showSpeechBubble('당근이 없어서 세금을 못 냅니다!', 9 * 16 + 8, 14 * 16, 3);
+                    }
                 }
             }
         ];
+
+        // NPC interactables
+        for (const npc of this.npcs) {
+            this.interactables.push(NPC.makeInteractable(npc));
+        }
+    },
+
+    _initNPCs() {
+        this.npcs = [
+            NPC.create(15 * 16, 16 * 16, '시민 토끼'),
+            NPC.create(20 * 16, 30 * 16, '아기 토끼'),
+            NPC.create(40 * 16, 16 * 16, '경비 토끼'),
+            NPC.create(14 * 16, 34 * 16, '상인 토끼'),
+        ];
+        for (const npc of this.npcs) {
+            npc.bounds = { minX: 2 * 16, minY: 3 * 16, maxX: 47 * 16, maxY: 35 * 16 };
+        }
     },
 
     onEnter(data) {
         this._buildMap();
+
+        if (this.npcs.length === 0) {
+            this._initNPCs();
+        }
+
         this._buildInteractables();
 
         if (data && data.x !== undefined) {
@@ -125,9 +155,20 @@ const CityScene = {
     onExit() {},
 
     update(dt) {
+        if (Inventory.isOverlayOpen()) {
+            Inventory.update();
+            return;
+        }
+        Inventory.update();
+
         Player.update(dt, this.tileMap, this.solidTiles);
         Interaction.check(this.interactables);
         UI.update(dt);
+
+        // Update NPCs
+        for (const npc of this.npcs) {
+            NPC.updateOne(npc, dt, this.tileMap, this.solidTiles);
+        }
     },
 
     render(ctx) {
@@ -156,6 +197,11 @@ const CityScene = {
         for (let i = 0; i < 48; i += 6) {
             ObjectSprites.draw(ctx, 'tree', i * 16, 0);
             ObjectSprites.draw(ctx, 'tree', i * 16, 36 * 16);
+        }
+
+        // Draw NPCs
+        for (const npc of this.npcs) {
+            NPC.renderOne(ctx, npc);
         }
 
         // Draw player

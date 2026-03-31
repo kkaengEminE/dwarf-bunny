@@ -1,8 +1,10 @@
-// UI system - mode indicator, speech bubbles, prompts
+// UI system - mode indicator, speech bubbles, prompts, overlays
 const UI = {
     speechBubble: null,
     speechTimer: 0,
     interactionPrompt: null,
+    notification: null,
+    notificationTimer: 0,
 
     showSpeechBubble(text, x, y, duration) {
         this.speechBubble = { text, x, y };
@@ -17,6 +19,11 @@ const UI = {
         this.interactionPrompt = null;
     },
 
+    showNotification(text, duration) {
+        this.notification = text;
+        this.notificationTimer = duration || 2;
+    },
+
     update(dt) {
         if (this.speechBubble) {
             this.speechTimer -= dt;
@@ -24,10 +31,16 @@ const UI = {
                 this.speechBubble = null;
             }
         }
+        if (this.notification) {
+            this.notificationTimer -= dt;
+            if (this.notificationTimer <= 0) {
+                this.notification = null;
+            }
+        }
     },
 
     // Menu button rect
-    menuBtn: { x: 10, y: 70, w: 70, h: 22 },
+    menuBtn: { x: 10, y: 40, w: 70, h: 22 },
 
     render(ctx) {
         const scene = SceneManager.currentName;
@@ -37,7 +50,7 @@ const UI = {
         // Mode indicator
         this._renderModeIndicator(ctx);
 
-        // Carrot counter
+        // Carrot counter (top-right)
         this._renderCarrotCounter(ctx);
 
         // Menu button
@@ -52,6 +65,18 @@ const UI = {
         if (this.interactionPrompt) {
             this._renderPrompt(ctx, this.interactionPrompt);
         }
+
+        // Notification (center screen)
+        if (this.notification) {
+            this._renderNotification(ctx);
+        }
+
+        // Inventory overlays
+        if (typeof Inventory !== 'undefined') {
+            Inventory.renderInventory(ctx);
+            Inventory.renderStats(ctx);
+            Inventory.renderStorage(ctx);
+        }
     },
 
     checkMenuClick() {
@@ -64,8 +89,6 @@ const UI = {
 
     _renderMenuButton(ctx) {
         const btn = this.menuBtn;
-        // Adjust Y if carrot counter is visible
-        btn.y = (typeof FarmScene !== 'undefined' && FarmScene.carrotsHarvested > 0) ? 70 : 40;
 
         const isHover = Input.mouseX >= btn.x && Input.mouseX <= btn.x + btn.w &&
                          Input.mouseY >= btn.y && Input.mouseY <= btn.y + btn.h;
@@ -95,17 +118,19 @@ const UI = {
     },
 
     _renderCarrotCounter(ctx) {
-        if (typeof FarmScene !== 'undefined' && FarmScene.carrotsHarvested > 0) {
-            const x = 10, y = 40;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(x, y, 100, 24);
-            ctx.strokeStyle = '#ff8833';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x, y, 100, 24);
-            ctx.fillStyle = '#ff8833';
-            ctx.font = '12px monospace';
-            ctx.fillText(`🥕 x${FarmScene.carrotsHarvested}`, x + 4, y + 16);
-        }
+        if (typeof Inventory === 'undefined') return;
+
+        // Always show carrot counter in top-right
+        const text = `🥕 x${Inventory.carrots}`;
+        const x = Game.width - 110, y = 10;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(x, y, 100, 24);
+        ctx.strokeStyle = '#ff8833';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, 100, 24);
+        ctx.fillStyle = '#ff8833';
+        ctx.font = '12px monospace';
+        ctx.fillText(text, x + 4, y + 16);
     },
 
     _renderSpeechBubble(ctx, bubble) {
@@ -156,5 +181,23 @@ const UI = {
         ctx.fillRect(px, py, w, h);
         ctx.fillStyle = '#ffff88';
         ctx.fillText(text, px + 6, py + 13);
+    },
+
+    _renderNotification(ctx) {
+        ctx.font = '14px monospace';
+        const text = this.notification;
+        const metrics = ctx.measureText(text);
+        const w = metrics.width + 24;
+        const h = 30;
+        const x = (Game.width - w) / 2;
+        const y = Game.height / 2 - 80;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#ffaa44';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = '#ffcc66';
+        ctx.fillText(text, x + 12, y + 21);
     }
 };
